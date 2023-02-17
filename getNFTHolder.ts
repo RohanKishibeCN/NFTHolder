@@ -5,11 +5,22 @@ const provider = new ethers.providers.JsonRpcProvider("https://mainnet.infura.io
 
 // 定义 NFT 合约地址和 NFT ID
 const nftContractAddress = "0x..."; // 将合约地址替换为您的 NFT 合约地址
-const nftId = 123; // 将 NFT ID 替换为您要查询的 NFT ID
 
 // 获取 NFT 合约实例
 const nftContract = new ethers.Contract(nftContractAddress, nftContractABI, provider);
 
-// 获取 NFT 持有人地址
-const ownerAddress = await nftContract.ownerOf(nftId);
-console.log(`NFT ${nftId} 的持有人地址为 ${ownerAddress}`);
+// 获取所有 Transfer 事件
+const filter = nftContract.filters.Transfer(null, null, null);
+const transferEvents = await nftContract.queryFilter(filter);
+
+// 收集所有持有人地址
+const owners = transferEvents.reduce((result, event) => {
+  const owner = event.args[2];
+  if (!result.includes(owner)) {
+    result.push(owner);
+  }
+  return result;
+}, []);
+
+console.log(`NFT 的所有持有人地址为 ${owners}`);
+
